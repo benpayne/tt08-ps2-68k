@@ -28,7 +28,8 @@ module ps2_decoder (
     assign valid = valid_reg;
     assign interupt = int_reg;
 
-    always @(negedge ps2_clk or posedge reset) begin
+    // posedge on negative clock to avoid and issue in ice40 synthesis.
+    always @(posedge ~ps2_clk or posedge reset) begin
         if (reset) begin 
             shift_reg <= 0;
         end else begin
