@@ -13,7 +13,7 @@ module ps2_decoder (
 
     localparam SYSTEM_CLOCK = 25_000_000;
     localparam PS2_CLOCK = 10_000;
-    localparam [12:0] PS2_BIT_TIME = SYSTEM_CLOCK / PS2_CLOCK;
+    localparam [12:0] PS2_BIT_TIME = $unsigned(SYSTEM_CLOCK / PS2_CLOCK);  // trucnate to avoid warning
 
     localparam IDLE = 0, SETUP = 1, CLEAR = 2;
 
@@ -46,7 +46,7 @@ module ps2_decoder (
                         state_reg <= SETUP;
                     end
                     SETUP: begin
-                        valid_reg <= shift_reg[2] ^ shift_reg[3] ^ shift_reg[4] ^ shift_reg[5] ^ shift_reg[6] ^ shift_reg[7] ^ shift_reg[8] ^ shift_reg[9] ^ shift_reg[1];
+                        valid_reg <= (shift_reg[2] ^ shift_reg[3] ^ shift_reg[4] ^ shift_reg[5] ^ shift_reg[6] ^ shift_reg[7] ^ shift_reg[8] ^ shift_reg[9] ^ shift_reg[1]) && shift_reg[0] == 1 && shift_reg[10] == 0;
                         state_reg <= CLEAR;
                     end
                     CLEAR: begin
@@ -67,9 +67,9 @@ module ps2_decoder (
 
     always @(posedge clk or posedge reset) begin
         if (reset || int_clear) begin
-            int_reg = 0;
+            int_reg <= 0;
         end else if (valid_reg) begin
-            int_reg = 1;
+            int_reg <= 1;
         end
     end 
 

@@ -17,11 +17,11 @@ module tt_um_benpayne_ps2_decoder (
 );
 
   // All output pins must be assigned. If not used, assign to 0.
-  assign uio_out[7:2] = 6'b0;  // Example: uio_out[7:1] are always 0
-  assign uio_oe = 8'b11;  // Example: All pins are outputs
+  assign uio_out[7:2] = 6'b0; // uio_out[7:2] are always 0
+  assign uio_oe = 8'b11;      // [uio_out[1:0] are outputs all others, don't care
 
   // List all unused inputs to prevent warnings
-  wire _unused = &{ena, uio_in, 1'b0};
+  wire _unused = &{ena, uio_in, ui_in[7:3], 1'b0};
 
   wire ps2_clk_internal;
   wire ps2_data_internal;
