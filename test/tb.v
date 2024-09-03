@@ -25,14 +25,18 @@ module tb ();
 
   wire ps2_clk;
   wire ps2_data;
+  wire clear_int;
   wire valid;
+  wire interupt;
 
   assign ui_in[0] = ps2_clk;
   assign ui_in[1] = ps2_data;
+  assign ui_in[2] = clear_int;
   assign valid = uio_out[0];
+  assign interupt = uio_out[1];
 
   // Replace tt_um_example with your module name:
-  tt_um_ps2_decoder user_project (
+  tt_um_benpayne_ps2_decoder user_project (
 
       // Include power ports for the Gate Level test:
 `ifdef GL_TEST

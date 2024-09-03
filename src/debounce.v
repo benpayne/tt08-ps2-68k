@@ -5,6 +5,7 @@
 
 module debounce (
     input wire clk,
+    input wire reset,
     input wire button,
     output wire debounced_button
 );
@@ -14,18 +15,25 @@ module debounce (
     reg        last_button = 0;
 
 
-    always @(posedge clk) begin
-        buf_button <= button;
-        last_button <= buf_button;
-
-        if (buf_button != last_button) begin
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
             counter <= 0;
-        end else if (counter[7] == 0) begin
-            counter <= counter + 1;
+            buf_button <= 0;
+            last_button <= 0;
+            debounced_button_reg <= 0;
         end else begin
-            debounced_button_reg <= last_button;
+            buf_button <= button;
+            last_button <= buf_button;
+
+            if (buf_button != last_button) begin
+                counter <= 0;
+            end else if (counter[7] == 0) begin
+                counter <= counter + 1;
+            end else begin
+                debounced_button_reg <= last_button;
+            end
         end
-    end
+    end 
 
     assign debounced_button = debounced_button_reg;
 endmodule

@@ -11,7 +11,7 @@ project:
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
 
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_ps2_decoder"
+  top_module:  "tt_um_benpayne_ps2_decoder"
   
   # List your project's source files here. Source files must be in ./src and you must list each source file separately, one per line:
   source_files:        
@@ -24,7 +24,7 @@ pinout:
   # Inputs
   ui[0]: "ps2_clk"
   ui[1]: "ps2_data"
-  ui[2]: ""
+  ui[2]: "clear_int"
   ui[3]: ""
   ui[4]: ""
   ui[5]: ""
@@ -43,7 +43,7 @@ pinout:
 
   # Bidirectional pins
   uio[0]: "valid"
-  uio[1]: ""
+  uio[1]: "interupt"
   uio[2]: ""
   uio[3]: ""
   uio[4]: ""

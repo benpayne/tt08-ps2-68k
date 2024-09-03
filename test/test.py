@@ -32,9 +32,12 @@ async def send_bits(ps2_clk, ps2_data, value, bit_count=8, parity_valid=True, st
 async def ps2_decode_test(dut):
     """Test getting one byte from keyboard."""
 
+    dut.clear_int.value = 0
     dut.rst_n.value = 0
     await Timer(1, units="us")
     dut.rst_n.value = 1
+
+    assert dut.interupt == 0, f"Interupt not clear after reset"
 
     #cocotb.start_saving_waves()
     cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
@@ -53,9 +56,16 @@ async def ps2_decode_test(dut):
 
     # wait enough time for the valid signal to go low and validate
     assert dut.valid == 0, "Valid not cleared properly"
-    assert dut.uio_oe == 0x01, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+    assert dut.interupt == 1, f"Interupt not clear after reset"
+    assert dut.uio_oe == 0x03, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
 
     await Timer(100, units="us")
+
+    dut.clear_int.value = 1
+    await Timer(80, units="ns")
+    dut.clear_int.value = 0
+    await Timer(40, units="ns")
+    assert dut.interupt == 0, f"Interupt not clear after reset"
 
 
 @cocotb.test()
@@ -79,9 +89,18 @@ async def ps2_decode_second_test(dut):
     # wait enough time for the valid signal to go low and validate
     await Timer(50, units="ns")
     assert dut.valid == 0, "Valid not cleared properly"
-    assert dut.uio_oe == 0x01, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+    assert dut.interupt == 1, f"Interupt set"
+    assert dut.uio_oe == 0x03, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
 
     await Timer(100, units="us")
+
+    # clear interupt
+    dut.clear_int.value = 1
+    await Timer(80, units="ns")
+    dut.clear_int.value = 0
+    await Timer(40, units="ns")
+    assert dut.interupt == 0, f"Interupt not clear after reset"
+
 
 @cocotb.test()
 async def ps2_decode_partial_test(dut):
@@ -104,6 +123,7 @@ async def ps2_decode_partial_test(dut):
     print(f"res: {res}")
 
     assert isinstance(res, Timer) , "Expected timeout got rising edge"
+
 
 async def send_two_bytes(ps2_clk, ps2_data, value1, value2):
     await send_bits(ps2_clk, ps2_data, value1)
@@ -131,7 +151,17 @@ async def ps2_decode_two_bytes_test(dut):
     # wait enough time for the valid signal to go low and validate
     await Timer(50, units="ns")
     assert dut.valid == 0, "Valid not cleared properly"
-    assert dut.uio_oe == 0x01, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+    assert dut.interupt == 1, f"Interupt not set"
+    assert dut.uio_oe == 0x03, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+
+    await Timer(100, units="us")
+
+    # clear interupt
+    dut.clear_int.value = 1
+    await Timer(80, units="ns")
+    dut.clear_int.value = 0
+    await Timer(40, units="ns")
+    assert dut.interupt == 0, f"Interupt not clear after reset"
 
     # wait for rising edge of valid and check data
     await RisingEdge(dut.valid)
@@ -140,6 +170,49 @@ async def ps2_decode_two_bytes_test(dut):
     # wait enough time for the valid signal to go low and validate
     await Timer(50, units="ns")
     assert dut.valid == 0, "Valid not cleared properly"
-    assert dut.uio_oe == 0x01, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+    assert dut.uio_oe == 0x03, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+
+    await Timer(100, units="us")
+
+    # clear interupt
+    dut.clear_int.value = 1
+    await Timer(80, units="ns")
+    dut.clear_int.value = 0
+    await Timer(40, units="ns")
+    assert dut.interupt == 0, f"Interupt not clear after reset"
+
+
+@cocotb.test()
+async def ps2_decode_two_bytes_no_int_clear_test(dut):
+    """Test receiveing two keycodes."""
+
+    #cocotb.start_saving_waves()
+    cocotb.start_soon(Clock(dut.clk, 40, units="ns").start())
+
+    dut.ps2_clk.value = 1
+    dut.ps2_data.value = 1
+
+    await Timer(1, units="us")
+
+    cocotb.start_soon(send_two_bytes(dut.ps2_clk, dut.ps2_data, 0xF0, 0x15))
+
+    # wait for rising edge of valid and check data
+    await RisingEdge(dut.valid)
+    assert dut.uo_out == 0xF0, f"Expected 0xF0, got {dut.uo_out.value.hex()}"
+
+    # wait enough time for the valid signal to go low and validate
+    await Timer(50, units="ns")
+    assert dut.valid == 0, "Valid not cleared properly"
+    assert dut.interupt == 1, f"Interupt not set"
+    assert dut.uio_oe == 0x03, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
+
+    # wait for rising edge of valid and check data
+    await RisingEdge(dut.valid)
+    assert dut.uo_out == 0x15, f"Expected 0xF0, got {dut.uo_out.value.hex()}"
+
+    # wait enough time for the valid signal to go low and validate
+    await Timer(50, units="ns")
+    assert dut.valid == 0, "Valid not cleared properly"
+    assert dut.uio_oe == 0x03, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
 
     await Timer(100, units="us")
