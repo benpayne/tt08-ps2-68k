@@ -23,17 +23,22 @@ module ps2_decoder (
     reg  [7:0]   ps2_value = 0;
     reg          valid_reg = 0;
     reg          int_reg = 0;
+    reg          ps2_clk_prev = 0;
 
     assign data = ps2_value;
     assign valid = valid_reg;
     assign interupt = int_reg;
 
-    // posedge on negative clock to avoid and issue in ice40 synthesis.
-    always @(posedge ~ps2_clk or posedge reset) begin
+    always @(posedge clk or posedge reset) begin
         if (reset) begin 
             shift_reg <= 0;
+            ps2_clk_prev <= 0;
         end else begin
-            shift_reg <= {shift_reg[9:0], ps2_data};
+            ps2_clk_prev <= ps2_clk;
+            // detect the falling edge of ps2_clk
+            if (!ps2_clk && ps2_clk_prev) begin
+                shift_reg <= {shift_reg[9:0], ps2_data};
+            end
         end
     end 
 
