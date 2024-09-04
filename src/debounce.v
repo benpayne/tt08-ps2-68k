@@ -9,31 +9,27 @@ module debounce (
     input wire button,
     output wire debounced_button
 );
-    reg [7:0]  counter = 0;  // use high bit to flag completion
-    reg        debounced_button_reg = 0;
-    reg        buf_button = 0;
-    reg        last_button = 0;
+    reg [7:0]  counter;  // use high bit to flag completion
+    reg        debounced_button_reg;
+    reg        last_button;
 
+    assign debounced_button = debounced_button_reg;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             counter <= 0;
-            buf_button <= 0;
-            last_button <= 0;
             debounced_button_reg <= 0;
+            last_button <= 0;
         end else begin
-            buf_button <= button;
-            last_button <= buf_button;
-
-            if (buf_button != last_button) begin
+            last_button <= button;
+            if (button != last_button) begin
                 counter <= 0;
-            end else if (counter[7] == 0) begin
-                counter <= counter + 1;
-            end else begin
+            end else if (counter[7] == 1) begin
                 debounced_button_reg <= last_button;
+            end else begin
+                counter <= counter + 1;
             end
         end
     end 
 
-    assign debounced_button = debounced_button_reg;
 endmodule

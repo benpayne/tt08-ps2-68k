@@ -71,10 +71,12 @@ module ps2_decoder (
     end
 
     always @(posedge clk or posedge reset) begin
-        if (reset || int_clear) begin
+        if (reset) begin
             int_reg <= 0;
         end else if (valid_reg) begin
             int_reg <= 1;
+        end else if (int_clear) begin
+            int_reg <= 0;
         end
     end 
 
