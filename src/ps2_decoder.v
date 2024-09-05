@@ -52,6 +52,8 @@ module ps2_decoder (
             clk_timeout <= 0;
             state_reg <= IDLE;
             valid_reg <= 0;
+            shift_reset <= 0;
+            ps2_value <= 8'b00000000;
         end else begin
             if (ps2_clk) begin
                 if (clk_timeout == PS2_BIT_TIME[12:0]) begin
