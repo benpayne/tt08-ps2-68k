@@ -39,7 +39,7 @@ module tt_um_benpayne_ps2_decoder (
   assign cs = ui_in[3];
 
   assign uo_out[0] = valid;
-  assign uo_out[1] = interupt;
+  //assign uo_out[1] = interupt;
   assign uo_out[2] = ~data_rdy;
 
   always @(posedge clk or negedge rst_n) begin
@@ -87,7 +87,7 @@ module tt_um_benpayne_ps2_decoder (
     .ps2_data(ps2_data_internal),
     .data(ps2_key_data),
     .valid(valid),
-    .interupt(interupt),
+    .interupt(uo_out[1]),
     .int_clear(int_clear)
   );
 endmodule

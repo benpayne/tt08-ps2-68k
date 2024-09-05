@@ -47,33 +47,39 @@ module ps2_decoder (
         end
     end 
 
-    always @(posedge clk) begin
-        if (ps2_clk) begin
-            if (clk_timeout == PS2_BIT_TIME[12:0]) begin
-                case(state_reg)
-                    IDLE: begin
-                        ps2_value <= {shift_reg[2], shift_reg[3], shift_reg[4], shift_reg[5], shift_reg[6], shift_reg[7], shift_reg[8], shift_reg[9]};
-                        state_reg <= SETUP;
-                    end
-                    SETUP: begin
-                        shift_reset <= 1;
-                        valid_reg <= (shift_reg[2] ^ shift_reg[3] ^ shift_reg[4] ^ shift_reg[5] ^ shift_reg[6] ^ shift_reg[7] ^ shift_reg[8] ^ shift_reg[9] ^ shift_reg[1]) && shift_reg[0] == 1 && shift_reg[10] == 0;
-                        state_reg <= CLEAR;
-                    end
-                    CLEAR: begin
-                        shift_reset <= 0;
-                        valid_reg <= 0;
-                        ps2_value <= 0;
-                        clk_timeout[12] <= 1;
-                    end
-                endcase
-            end else if (clk_timeout[12] == 0) begin
-                clk_timeout <= clk_timeout + 1;
-            end
-        end else begin
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
             clk_timeout <= 0;
             state_reg <= IDLE;
             valid_reg <= 0;
+        end else begin
+            if (ps2_clk) begin
+                if (clk_timeout == PS2_BIT_TIME[12:0]) begin
+                    case(state_reg)
+                        IDLE: begin
+                            ps2_value <= {shift_reg[2], shift_reg[3], shift_reg[4], shift_reg[5], shift_reg[6], shift_reg[7], shift_reg[8], shift_reg[9]};
+                            state_reg <= SETUP;
+                        end
+                        SETUP: begin
+                            shift_reset <= 1;
+                            valid_reg <= (shift_reg[2] ^ shift_reg[3] ^ shift_reg[4] ^ shift_reg[5] ^ shift_reg[6] ^ shift_reg[7] ^ shift_reg[8] ^ shift_reg[9] ^ shift_reg[1]) && shift_reg[0] == 1 && shift_reg[10] == 0;
+                            state_reg <= CLEAR;
+                        end
+                        CLEAR: begin
+                            shift_reset <= 0;
+                            valid_reg <= 0;
+                            ps2_value <= 0;
+                            clk_timeout[12] <= 1;
+                        end
+                    endcase
+                end else if (clk_timeout[12] == 0) begin
+                    clk_timeout <= clk_timeout + 1;
+                end
+            end else begin
+                clk_timeout <= 0;
+                state_reg <= IDLE;
+                valid_reg <= 0;
+            end
         end
     end
 
