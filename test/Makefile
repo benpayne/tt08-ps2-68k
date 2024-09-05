@@ -5,7 +5,7 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v debounce.v ps2_decoder.v
+PROJECT_SOURCES = project.v debounce.v ps2_decoder.v dual_fifo.v
 
 ifneq ($(GATES),yes)
 

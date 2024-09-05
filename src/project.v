@@ -17,15 +17,28 @@ module tt_um_benpayne_ps2_decoder (
 );
 
   // All output pins must be assigned. If not used, assign to 0.
-  assign uio_out[7:2] = 6'b0; // uio_out[7:2] are always 0
-  assign uio_oe = 8'b11;      // [uio_out[1:0] are outputs all others, don't care
+  assign uio_oe = 8'b11111111; // [uio_out[7:0] are always outputs
+  assign uo_out[7:3] = 5'b00000; // uo_out[7:3] set to always 0
 
   // List all unused inputs to prevent warnings
-  wire _unused = &{ena, uio_in, ui_in[7:3], 1'b0};
+  wire _unused = &{ena, uio_in, ui_in[7:4], 1'b0};
 
   wire ps2_clk_internal;
   wire ps2_data_internal;
-  
+  wire [7:0] ps2_key_data;
+  wire valid;
+  wire interupt;
+  wire int_clear;
+  wire cs;
+  wire data_rdy;
+
+  assign int_clear = ui_in[2];
+  assign cs = ui_in[3];
+
+  assign uo_out[0] = valid;
+  assign uo_out[1] = interupt;
+  assign uo_out[2] = ~data_rdy;
+
   debounce ps2_clk_debounce(
     .clk(clk),
     .reset(~rst_n),
@@ -40,14 +53,24 @@ module tt_um_benpayne_ps2_decoder (
     .debounced_button(ps2_data_internal)
   );
 
+  dual_port_fifo memory(
+    .clk(clk),
+    .rst(~rst_n),
+    .wr_en(valid),
+    .rd_en(cs),
+    .empty(data_rdy),
+    .data_in(ps2_key_data),
+    .data_out(uio_out)
+  );
+
   ps2_decoder ps2_decoder_inst (
     .clk(clk),
     .reset(~rst_n),
     .ps2_clk(ps2_clk_internal),
     .ps2_data(ps2_data_internal),
-    .data(uo_out),
-    .valid(uio_out[0]),
-    .interupt(uio_out[1]),
-    .int_clear(ui_in[2])
+    .data(ps2_key_data),
+    .valid(valid),
+    .interupt(interupt),
+    .int_clear(int_clear)
   );
 endmodule

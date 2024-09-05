@@ -24,6 +24,7 @@ module ps2_decoder (
     reg          valid_reg = 0;
     reg          int_reg = 0;
     reg          ps2_clk_prev = 0;
+    reg          shift_reset = 0;
 
     assign data = ps2_value;
     assign valid = valid_reg;
@@ -31,13 +32,17 @@ module ps2_decoder (
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin 
-            shift_reg <= 0;
+            shift_reg <= 11'b11111111111;
             ps2_clk_prev <= 0;
         end else begin
-            ps2_clk_prev <= ps2_clk;
-            // detect the falling edge of ps2_clk
-            if (!ps2_clk && ps2_clk_prev) begin
-                shift_reg <= {shift_reg[9:0], ps2_data};
+            if (shift_reset) begin
+                shift_reg <= 11'b11111111111;
+            end else begin
+                ps2_clk_prev <= ps2_clk;
+                // detect the falling edge of ps2_clk
+                if (!ps2_clk && ps2_clk_prev) begin
+                    shift_reg <= {shift_reg[9:0], ps2_data};
+                end
             end
         end
     end 
@@ -51,10 +56,12 @@ module ps2_decoder (
                         state_reg <= SETUP;
                     end
                     SETUP: begin
+                        shift_reset <= 1;
                         valid_reg <= (shift_reg[2] ^ shift_reg[3] ^ shift_reg[4] ^ shift_reg[5] ^ shift_reg[6] ^ shift_reg[7] ^ shift_reg[8] ^ shift_reg[9] ^ shift_reg[1]) && shift_reg[0] == 1 && shift_reg[10] == 0;
                         state_reg <= CLEAR;
                     end
                     CLEAR: begin
+                        shift_reset <= 0;
                         valid_reg <= 0;
                         ps2_value <= 0;
                         clk_timeout[12] <= 1;
