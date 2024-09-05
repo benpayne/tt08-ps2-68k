@@ -28,9 +28,14 @@ async def send_bits(ps2_clk, ps2_data, value, bit_count=8, parity_valid=True, st
         await send_bit(ps2_clk, ps2_data, 1)  # stop bit
     ps2_clk.value = 1
 
+
 async def read_byte(dut):
-    dut.cs.value = 1
     await Timer(40, units="ns")
+    assert dut.uio_oe.value == 0x00, "uio_oe must not be set before a read"
+    dut.cs.value = 1
+    # wait 3 clock to ensure that cs doesn't double trigger and read multiple bytes. only one byte per rising edge.
+    await Timer(120, units="ns")
+    assert dut.uio_oe.value == 0xFF, "uio_oe must be set when reading data"
     dut.cs.value = 0
     return dut.uio_out.value
 
@@ -63,7 +68,6 @@ async def ps2_decode_test(dut):
     await Timer(80, units="ns")
 
     # wait enough time for the valid signal to go low and validate
-    assert dut.uio_oe == 0xFF, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
     assert dut.valid == 0, "Valid not cleared properly"
     assert dut.interupt == 1, f"Interupt not clear after reset"
     assert dut.data_rdy == 1, f"data ready not set after valid"
@@ -102,7 +106,6 @@ async def ps2_decode_second_test(dut):
     await Timer(80, units="ns")
 
     # wait enough time for the valid signal to go low and validate
-    assert dut.uio_oe == 0xFF, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
     assert dut.valid == 0, "Valid not cleared properly"
     assert dut.interupt == 1, f"Interupt not clear after reset"
     assert dut.data_rdy == 1, f"data ready not set after valid"
@@ -169,7 +172,6 @@ async def ps2_decode_two_bytes_test(dut):
     await Timer(80, units="ns")
 
     # wait enough time for the valid signal to go low and validate
-    assert dut.uio_oe == 0xFF, f"Expected 0xFF, got {dut.uio_oe.value.hex()}"
     assert dut.valid == 0, "Valid not cleared properly"
     assert dut.interupt == 1, f"Interupt not clear after reset"
     assert dut.data_rdy == 1, f"data ready not set after valid"

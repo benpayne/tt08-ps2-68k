@@ -17,7 +17,7 @@ module tt_um_benpayne_ps2_decoder (
 );
 
   // All output pins must be assigned. If not used, assign to 0.
-  assign uio_oe = 8'b11111111; // [uio_out[7:0] are always outputs
+  assign uio_oe = cs ? 8'b11111111 : 8'b00000000; // [uio_out[7:0] are always outputs
   assign uo_out[7:3] = 5'b00000; // uo_out[7:3] set to always 0
 
   // List all unused inputs to prevent warnings
@@ -32,12 +32,29 @@ module tt_um_benpayne_ps2_decoder (
   wire cs;
   wire data_rdy;
 
+  reg cs_prev = 0;
+  reg cs_trigger = 0;
+
   assign int_clear = ui_in[2];
   assign cs = ui_in[3];
 
   assign uo_out[0] = valid;
   assign uo_out[1] = interupt;
   assign uo_out[2] = ~data_rdy;
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      cs_prev <= 0;
+      cs_trigger <= 0;
+    end else begin
+      cs_prev <= cs;
+      if (cs_prev == 0 && cs) begin
+        cs_trigger <= 1;
+      end else begin
+        cs_trigger <= 0;
+      end 
+    end
+  end
 
   debounce ps2_clk_debounce(
     .clk(clk),
@@ -57,7 +74,7 @@ module tt_um_benpayne_ps2_decoder (
     .clk(clk),
     .rst(~rst_n),
     .wr_en(valid),
-    .rd_en(cs),
+    .rd_en(cs_trigger),
     .empty(data_rdy),
     .data_in(ps2_key_data),
     .data_out(uio_out)
